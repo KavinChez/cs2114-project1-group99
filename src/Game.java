@@ -35,27 +35,39 @@ public class Game {
     public void play() {
         try {
             initialTable();
+            System.out.println();
+
             while (!table.isEmpty()) {
                 checkShoe();
+
                 takeBets();
+                System.out.println();
+
                 initialDeal();
+                System.out.println();
 
                 for (int i = 0; i < table.size(); i++) {
                     turn(table.get(i));
+                    System.out.println();
                 }
 
                 dealerTurn();
                 settleBets();
+                System.out.println();
+
                 endRound();
+                System.out.println();
             }
         }
-        catch (IllegalStateException e) {
-            // Print final bankrolls upon EOF / exit
-            System.out.println("\nGame over. Final bankrolls:");
-            for (int i = 0; i < table.size(); i++) {
-                Player p = table.get(i);
-                System.out.println(p.getName() + ": $" + p.getBankroll());
-            }
+        catch (InputEndedException e) {
+            System.out.println("\nInput ended; leaving the game.");
+        }
+
+        System.out.println("Game over.");
+        for (int i = 0; i < table.size(); i++) {
+            Player p = table.get(i);
+            System.out.println(p.getName() + " finishes with $" + p
+                .getBankroll());
         }
     }
 
@@ -82,6 +94,14 @@ public class Game {
             }
             deal(dealer);
         }
+
+        // Display players' hands
+        for (int p = 0; p < table.size(); p++) {
+            System.out.println(table.get(p));
+        }
+
+        // Show dealer's first card, but hide the second
+        System.out.println("Dealer: " + dealer.getHand()[0] + " [hidden]");
     }
 
 
@@ -274,10 +294,25 @@ public class Game {
     public void settleBets() {
         for (int i = 0; i < table.size(); i++) {
             Player p = table.get(i);
+
+            int bet = p.getBet();
             int amount = payout(p);
+            int profit = amount - bet;
+
             p.settle(amount);
-            System.out.println(p.getName() + " gets $" + amount
-                + " back. Bankroll: $" + p.getBankroll());
+
+            if (profit > 0) {
+                System.out.println(p.getName() + " wins $" + profit
+                    + ". Bankroll: $" + p.getBankroll());
+            }
+            else if (profit < 0) {
+                System.out.println(p.getName() + " loses $" + (-profit)
+                    + ". Bankroll: $" + p.getBankroll());
+            }
+            else {
+                System.out.println(p.getName() + " pushes. Bankroll: $" + p
+                    .getBankroll());
+            }
         }
     }
 
