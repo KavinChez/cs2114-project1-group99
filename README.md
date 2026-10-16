@@ -39,30 +39,82 @@ In Eclipse, open each test class and select **Run As → JUnit Test**.
 
 The tests cover card properties and equality, player bankroll and hand behavior, linked-list operations, blackjack rules, deck construction and shuffling, input validation, and game integration.
 
+
 ## Reflection
 
-Our main design challenge was connecting reusable data structures to game behavior while maintaining a clear separation of responsibilities. `LinkedChain<T>` stores cards and players without knowing blackjack rules, while `Card`, `Player`, and `Game` handle card properties, player state, and gameplay respectively.
+### 1. What changed from the specification, and why?
 
-Implementation and testing revealed several important edge cases, including preserving insertion order in the linked list, maintaining head and tail references during removal, supporting duplicate cards in a two-deck shoe, handling Aces as either 1 or 11, distinguishing natural blackjack from other 21-point hands, and calculating payouts correctly after doubling down.
+The Deliverable 2 specification defined a terminal-based, single-player blackjack game as the MVP. We kept the terminal interface to focus on functionality and testing, but expanded the game to support up to five players, completing multiplayer as a stretch goal.
 
-Another challenge was integrating the individual components into a working game. Although the individual classes passed their unit tests, running complete rounds exposed issues with input handling, dealer behavior, and terminal output.
+We also changed the starting bankroll from $500 to $100 during play-testing. This made the betting amounts more appropriate for shorter games.
 
-We also refined the terminal interface to improve readability by separating player turns, displaying the dealer's visible card, announcing natural blackjacks, and showing net winnings and losses rather than total returned payouts.
+**Origin:** Original specification and gameplay adjustments during development.
 
-Overall, this project reinforced the importance of following method contracts, maintaining data structure invariants, validating input, and testing how different components interact.
+### 2. How did LinkedChain change?
+
+We modified the course-provided `LinkedChain<T>` to preserve insertion order. The original `add()` inserted at the front, while our specification required adding to the end in O(1) time.
+
+We added a tail pointer, implemented `removeFirst()` and `removeAt(int)`, and improved null validation.
+
+`removeAt()` was especially important for shuffling because the two-deck shoe contains duplicate cards. Removing by index ensures the correct node is removed.
+
+**Origin:** Specification requirements, code review, and GenAI-assisted implementation.
+
+### 3. What implementation and testing challenges occurred?
+
+During integration, `readName()` returned null, causing a `NullPointerException`. Other unfinished methods prevented cards from being dealt correctly.
+
+We implemented the missing deck and input methods, improved terminal formatting, displayed the dealer's visible card, and added blackjack announcements.
+
+We also changed settlement messages to display net winnings and losses instead of gross payouts.
+
+Testing identified issues with dealer-turn setup and insufficient coverage of round cleanup. We corrected these tests.
+
+**Origin:** Manual testing, observed exceptions, and GenAI-assisted debugging.
+
+### 4. What remains unfinished or uncertain?
+
+The core blackjack game works, including multiplayer, betting, doubling down, and payouts.
+
+However, the shoe is only checked at the beginning of each round. An unusually long multiplayer round could exhaust the remaining cards.
+
+Pair splitting, card recycling, and a graphical interface also remain unimplemented stretch goals.
+
+Further integration testing would improve confidence in consecutive rounds and unusual edge cases.
+
+**Origin:** Review of the completed implementation, test coverage, and original stretch goals.
 
 ## Next Steps
 
-Several features could improve Pure21 beyond the current prototype:
+The terminal-based MVP is complete. The following tasks are ordered by priority. Responsibilities are proposed and should be confirmed by the group.
 
-- Add clearer messages when the shoe is rebuilt and shuffled.
-- Handle shoe exhaustion during unusually long rounds instead of checking only at the beginning of each round.
-- Expand integration tests for multiple players, consecutive rounds, natural blackjack, doubling down, and unexpected end-of-input.
-- Implement splitting pairs into separate hands.
-- Recycle used cards rather than rebuilding the entire shoe.
-- Develop a graphical user interface to replace the terminal-based interface.
+1. **Final testing — All members — Committed**
+   - Run all five test classes in Eclipse.
+   - Verify the $100 starting bankroll.
+   - Resolve any remaining failures.
 
-Our priority would be improving game robustness and testing before adding more advanced features.
+2. **Prevent shoe exhaustion — Nicolas and Naomika — Proposed**
+   - Handle an empty shoe during unusually long rounds.
+   - Add `testMultiplayerRoundNearEmptyShoe()`.
+
+3. **Expand integration tests — All members — Proposed**
+   - Add `testMultiplayerConsecutiveRounds()`.
+   - Add `testNaturalBlackjackPayout()`.
+   - Add `testDoubleDownEndsTurn()`.
+
+4. **Reshuffling announcement — Nicolas — Deferred**
+   - Display a message when the shoe is rebuilt.
+   - Add `testReshuffleMessage()`.
+
+### Stretch Goals
+
+- **Multiplayer:** Implemented. Supports up to five players.
+- **Pair splitting:** Deferred. Proposed owners: Kavin and Naomika.
+- **Card recycling:** Deferred. Proposed owner: Nicolas.
+- **Graphical interface:** Deferred. Proposed owners: Nicolas and Naomika.
+
+The deferred features are not required for the current MVP.
+
 
 ## Attribution
 
