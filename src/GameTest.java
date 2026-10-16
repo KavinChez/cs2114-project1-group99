@@ -63,13 +63,7 @@ public class GameTest extends student.TestCase {
 
         // Exception handling with empty input stream
         Game gEx = gameWithInput("");
-        Exception thrown = null;
-        try {
-            gEx.play();
-        }
-        catch (Exception e) {
-            thrown = e;
-        }
+        gEx.play();
         assertTrue(gEx.getTable().isEmpty());
     }
 

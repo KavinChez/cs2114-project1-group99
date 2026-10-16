@@ -3,7 +3,7 @@ import java.util.Scanner;
 
 public class Game {
     private static final int NUM_DECKS = 2;
-    private static final int STARTING_BANKROLL = 100;
+    private static final int STARTING_BANKROLL = 500;
 
     private LinkedChain<Player> table;
     private LinkedChain<Card> deck;
