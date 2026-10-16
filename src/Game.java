@@ -3,7 +3,7 @@ import java.util.Scanner;
 
 public class Game {
     private static final int NUM_DECKS = 2;
-    private static final int STARTING_BANKROLL = 500;
+    private static final int STARTING_BANKROLL = 100;
 
     private LinkedChain<Player> table;
     private LinkedChain<Card> deck;
@@ -97,7 +97,14 @@ public class Game {
 
         // Display players' hands
         for (int p = 0; p < table.size(); p++) {
-            System.out.println(table.get(p));
+            Player player = table.get(p);
+
+            if (player.isBlackjack()) {
+                System.out.println(player + " - BLACKJACK!");
+            }
+            else {
+                System.out.println(player);
+            }
         }
 
         // Show dealer's first card, but hide the second
@@ -230,6 +237,7 @@ public class Game {
 
     public void checkShoe() {
         if (deck.size() < 15) {
+            System.out.println("\nReshuffling the deck...\n");
             buildDeck();
         }
     }
