@@ -11,123 +11,103 @@
  * addToEnd() preserves insertion order.
  *
  * Time complexity, where n is the number of entries:
- *   add              O(1)
- *   addToEnd         O(n)
- *   remove()         O(1)
- *   remove(T)        O(n)
- *   clear            O(1)
- *   get              O(n)
- *   contains         O(n)
- *   count            O(n)
- *   size             O(1)
- *   isEmpty          O(1)
- *   toArray          O(n)
+ * add O(1)
+ * addToEnd O(n)
+ * remove() O(1)
+ * remove(T) O(n)
+ * clear O(1)
+ * get O(n)
+ * contains O(n)
+ * count O(n)
+ * size O(1)
+ * isEmpty O(1)
+ * toArray O(n)
  *
- * @author CS 2114 Staff
- * @version September 2026
+ * /**
+ * A reusable, generic singly linked list that preserves insertion order.
+ * Null entries are not permitted; duplicate entries are allowed.
  *
- * @param <T> the type of entries stored in the chain
+ * @param <T>
+ *            type of element stored in the chain
  */
-public class LinkedChain<T>
-{
-    private Node<T> firstNode;   // reference to the first node, or null
-    private int numberOfEntries; // number of nodes in the chain
+public class LinkedChain<T> {
+    private Node<T> head;
+    private Node<T> tail;
+    private int size;
 
-    /**
-     * Creates an empty chain.
-     */
-    public LinkedChain()
-    {
-        firstNode = null;
-        numberOfEntries = 0;
+    /** Creates an empty chain. O(1). */
+    public LinkedChain() {
+        head = null;
+        tail = null;
+        size = 0;
     }
 
+
     /**
-     * Adds a new entry to the front of this chain.
+     * Appends an entry to the end of the chain. O(1).
      *
-     * @param newEntry the object to be added; must not be null
-     * @return true
-     * @throws IllegalArgumentException if newEntry is null
+     * @param item
+     *            entry to append
+     * @throws IllegalArgumentException
+     *             if item is null
      */
-    public boolean add(T newEntry)
-    {
-        requireNonNull(newEntry);
-        firstNode = new Node<T>(newEntry, firstNode);
-        numberOfEntries++;
+    public void add(T item) {
+        requireNonNull(item);
+        Node<T> newNode = new Node<T>(item);
+
+        if (tail == null) {
+            head = newNode;
+        }
+        else {
+            tail.next = newNode;
+        }
+        tail = newNode;
+        size++;
+    }
+
+
+    /**
+     * Compatibility method for the starter code and existing GameTest.
+     * Appends in O(1), just like add().
+     *
+     * @param item
+     *            entry to append
+     * @return true after insertion
+     */
+    public boolean addToEnd(T item) {
+        add(item);
         return true;
     }
 
-    /**
-     * Adds a new entry to the end of this chain.
-     *
-     * @param newEntry the object to be added; must not be null
-     * @return true
-     * @throws IllegalArgumentException if newEntry is null
-     */
-    public boolean addToEnd(T newEntry)
-    {
-        requireNonNull(newEntry);
-        Node<T> newNode = new Node<T>(newEntry);
-        if (firstNode == null)
-        {
-            firstNode = newNode;
-        }
-        else
-        {
-            Node<T> current = firstNode;
-            while (current.next != null)
-            {
-                current = current.next;
-            }
-            current.next = newNode;
-        }
-        numberOfEntries++;
-        return true;
-    }
 
     /**
-     * Removes and returns the first entry in this chain, if possible.
+     * Removes the first entry equal to item. O(n).
      *
-     * @return the removed entry, or null if the chain is empty
+     * @param item
+     *            entry to find (using equals)
+     * @return true if an entry was removed; false if absent
+     * @throws IllegalArgumentException
+     *             if item is null
      */
-    public T remove()
-    {
-        if (firstNode == null)
-        {
-            return null;
-        }
-        T result = firstNode.data;
-        firstNode = firstNode.next;
-        numberOfEntries--;
-        return result;
-    }
-
-    /**
-     * Removes the first occurrence of a given entry from this chain.
-     *
-     * @param anEntry the entry to be removed
-     * @return true if the removal was successful, or false if not
-     */
-    public boolean remove(T anEntry)
-    {
-        if (anEntry == null || firstNode == null)
-        {
+    public boolean remove(T item) {
+        requireNonNull(item);
+        if (head == null) {
             return false;
         }
-        if (anEntry.equals(firstNode.data))
-        {
-            firstNode = firstNode.next;
-            numberOfEntries--;
+        if (item.equals(head.data)) {
+            removeFirst();
             return true;
         }
-        Node<T> previous = firstNode;
-        Node<T> current = firstNode.next;
-        while (current != null)
-        {
-            if (anEntry.equals(current.data))
-            {
+
+        Node<T> previous = head;
+        Node<T> current = head.next;
+        while (current != null) {
+            if (item.equals(current.data)) {
                 previous.next = current.next;
-                numberOfEntries--;
+                if (current == tail) {
+                    tail = previous;
+                }
+                size--;
                 return true;
             }
             previous = current;
@@ -136,195 +116,220 @@ public class LinkedChain<T>
         return false;
     }
 
-    /**
-     * Removes all entries from this chain.
-     */
-    public void clear()
-    {
-        firstNode = null;
-        numberOfEntries = 0;
-    }
 
     /**
-     * Gets the entry at the given position without removing it.
+     * Removes and returns the first entry. O(1).
      *
-     * @param index the zero-based position
-     * @return the entry at that position
-     * @throws IndexOutOfBoundsException if index is negative or
-     *         index is greater than or equal to size()
+     * @return the removed entry
+     * @throws IllegalStateException
+     *             if the chain is empty
      */
-    public T get(int index)
-    {
-        if (index < 0 || index >= numberOfEntries)
-        {
-            throw new IndexOutOfBoundsException(
-                "Index " + index + " out of bounds for size "
-                + numberOfEntries);
+    public T removeFirst() {
+        if (head == null) {
+            throw new IllegalStateException(
+                "Cannot remove from an empty chain");
         }
-        Node<T> current = firstNode;
-        for (int i = 0; i < index; i++)
-        {
+
+        T result = head.data;
+        head = head.next;
+        size--;
+        if (head == null) {
+            tail = null;
+        }
+        return result;
+    }
+
+
+    /**
+     * Compatibility method for the starter code and existing GameTest.
+     * Unlike removeFirst(), this returns null when the chain is empty.
+     * O(1).
+     *
+     * @return first entry, or null if empty
+     */
+    public T remove() {
+        return isEmpty() ? null : removeFirst();
+    }
+
+
+    /**
+     * Removes and returns an entry by zero-based index. O(n).
+     *
+     * @param index
+     *            index of the entry to remove
+     * @return the removed entry
+     * @throws IndexOutOfBoundsException
+     *             if index is invalid
+     */
+    public T removeAt(int index) {
+        checkIndex(index);
+        if (index == 0) {
+            return removeFirst();
+        }
+
+        Node<T> previous = head;
+        for (int i = 0; i < index - 1; i++) {
+            previous = previous.next;
+        }
+
+        Node<T> removed = previous.next;
+        previous.next = removed.next;
+        if (removed == tail) {
+            tail = previous;
+        }
+        size--;
+        return removed.data;
+    }
+
+
+    /**
+     * Returns an entry by zero-based index without removing it. O(n).
+     *
+     * @param index
+     *            index of the requested entry
+     * @return the entry at index
+     * @throws IndexOutOfBoundsException
+     *             if index is invalid
+     */
+    public T get(int index) {
+        checkIndex(index);
+        Node<T> current = head;
+        for (int i = 0; i < index; i++) {
             current = current.next;
         }
         return current.data;
     }
 
-    /**
-     * Tests whether this chain contains a given entry.
-     *
-     * @param anEntry the entry to locate
-     * @return true if the chain contains anEntry, or false if not
-     */
-    public boolean contains(T anEntry)
-    {
-        return count(anEntry) > 0;
-    }
 
     /**
-     * Counts the number of times a given entry appears in this chain.
+     * Checks whether an equal entry is present. O(n).
      *
-     * @param anEntry the entry to be counted
-     * @return the number of times anEntry appears in the chain
+     * @param item
+     *            entry to search for
+     * @return whether the chain contains an equal entry
+     * @throws IllegalArgumentException
+     *             if item is null
      */
-    public int count(T anEntry)
-    {
-        if (anEntry == null)
-        {
-            return 0;
-        }
-        int frequency = 0;
-        Node<T> current = firstNode;
-        while (current != null)
-        {
-            if (anEntry.equals(current.data))
-            {
-                frequency++;
+    public boolean contains(T item) {
+        requireNonNull(item);
+        Node<T> current = head;
+        while (current != null) {
+            if (item.equals(current.data)) {
+                return true;
             }
             current = current.next;
         }
-        return frequency;
+        return false;
     }
 
-    /**
-     * Gets the number of entries currently in this chain.
-     *
-     * @return the integer number of entries in the chain
-     */
-    public int size()
-    {
-        return numberOfEntries;
-    }
 
     /**
-     * Sees whether this chain is empty.
+     * Counts entries equal to item. O(n).
      *
-     * @return true if the chain has no entries, or false if not
+     * @param item
+     *            entry to count
+     * @return number of matching entries
+     * @throws IllegalArgumentException
+     *             if item is null
      */
-    public boolean isEmpty()
-    {
-        return numberOfEntries == 0;
-    }
-
-    /**
-     * Copies every entry in this chain into the given array, first entry
-     * first.
-     *
-     * @param values an array of the correct type to fill; it must have
-     *               length at least size()
-     * @return the array containing all entries in the chain
-     * @throws IllegalArgumentException if values is null or too small
-     */
-    public T[] toArray(T[] values)
-    {
-        if (values == null)
-        {
-            throw new IllegalArgumentException("Array must not be null");
+    public int count(T item) {
+        requireNonNull(item);
+        int matches = 0;
+        Node<T> current = head;
+        while (current != null) {
+            if (item.equals(current.data)) {
+                matches++;
+            }
+            current = current.next;
         }
-        if (values.length < numberOfEntries)
-        {
+        return matches;
+    }
+
+
+    /** Returns the number of entries. O(1). */
+    public int size() {
+        return size;
+    }
+
+
+    /** Returns whether the chain is empty. O(1). */
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+
+    /** Removes every entry. O(1). */
+    public void clear() {
+        head = null;
+        tail = null;
+        size = 0;
+    }
+
+
+    /**
+     * Copies entries into a supplied array in insertion order. O(n).
+     * Retained for compatibility with the starter code.
+     *
+     * @param values
+     *            destination array of length at least size()
+     * @return the same destination array
+     * @throws IllegalArgumentException
+     *             if values is null or too small
+     */
+    public T[] toArray(T[] values) {
+        if (values == null || values.length < size) {
             throw new IllegalArgumentException(
-                "Array of length " + values.length
-                + " is too small for " + numberOfEntries + " entries");
+                "Destination array is null or too small");
         }
-        int index = 0;
-        Node<T> current = firstNode;
-        while (current != null)
-        {
-            values[index] = current.data;
-            index++;
+
+        Node<T> current = head;
+        int i = 0;
+        while (current != null) {
+            values[i++] = current.data;
             current = current.next;
         }
         return values;
     }
 
-    /**
-     * Returns a readable listing of the chain, first entry first,
-     * e.g. "[a, b, c]".
-     *
-     * @return a string representation of this chain
-     */
+
+    /** Returns a listing in insertion order, e.g., [A, B, C]. O(n). */
     @Override
-    public String toString()
-    {
-        StringBuilder sb = new StringBuilder("[");
-        Node<T> current = firstNode;
-        while (current != null)
-        {
-            sb.append(current.data);
-            if (current.next != null)
-            {
-                sb.append(", ");
+    public String toString() {
+        StringBuilder result = new StringBuilder("[");
+        Node<T> current = head;
+        while (current != null) {
+            result.append(current.data);
+            if (current.next != null) {
+                result.append(", ");
             }
             current = current.next;
         }
-        sb.append("]");
-        return sb.toString();
+        return result.append("]").toString();
     }
 
-    /**
-     * Rejects null entries.
-     *
-     * @param entry the entry to check
-     * @throws IllegalArgumentException if entry is null
-     */
-    private void requireNonNull(T entry)
-    {
-        if (entry == null)
-        {
-            throw new IllegalArgumentException("Cannot add null to chain");
+
+    private void requireNonNull(T item) {
+        if (item == null) {
+            throw new IllegalArgumentException("Chain entries cannot be null");
         }
     }
 
-    /**
-     * A node in the chain. Holds one entry and a link to the next node.
-     *
-     * @param <E> the type of data held in the node
-     */
-    private static class Node<E>
-    {
-        private E data;        // entry stored in this node
-        private Node<E> next;  // link to the next node, or null
 
-        /**
-         * Creates a node with the given data and no next node.
-         *
-         * @param dataPortion the entry to store
-         */
-        private Node(E dataPortion)
-        {
-            this(dataPortion, null);
+    private void checkIndex(int index) {
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("Index " + index
+                + " out of bounds for size " + size);
         }
+    }
 
-        /**
-         * Creates a node with the given data and next link.
-         *
-         * @param dataPortion the entry to store
-         * @param nextNode the node that follows this one
-         */
-        private Node(E dataPortion, Node<E> nextNode)
-        {
-            data = dataPortion;
-            next = nextNode;
+    /** Single linked node. */
+    private static class Node<E> {
+        private E data;
+        private Node<E> next;
+
+        private Node(E data) {
+            this.data = data;
+            next = null;
         }
     }
 }
