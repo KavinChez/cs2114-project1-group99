@@ -163,29 +163,51 @@ public class GameTest extends student.TestCase {
 
 
     public void testEndRound() {
-        // Normal test case (broke player removal)
-        Player brokePlayer = new Player("BrokeUser", 0);
-        game.getTable().addToEnd(brokePlayer);
-        assertTrue(brokePlayer.isBroke());
-        if (brokePlayer.isBroke()) {
-            game.removePlayer(brokePlayer);
-        }
-        assertFalse(game.getTable().contains(brokePlayer));
+        Game g = gameWithInput("yes\nno\n");
 
-        // Exception testing for input termination
+        Player broke = new Player("Broke", 0);
+        Player staying = new Player("Staying", 500);
+        Player leaving = new Player("Leaving", 500);
+
+        g.getTable().add(broke);
+        g.getTable().add(staying);
+        g.getTable().add(leaving);
+
+        give(broke, "4", "6");
+        give(staying, "A", "8");
+        give(leaving, "10", "7");
+        give(g.getDealer(), "9", "7");
+
+        g.endRound();
+
+        // Only the player who chooses yes should remain
+        assertEquals(1, g.getTable().size());
+        assertTrue(g.getTable().contains(staying));
+        assertFalse(g.getTable().contains(broke));
+        assertFalse(g.getTable().contains(leaving));
+
+        // All hands should be cleared
+        assertEquals(0, broke.getHandSize());
+        assertEquals(0, staying.getHandSize());
+        assertEquals(0, leaving.getHandSize());
+        assertEquals(0, g.getDealer().getHandSize());
+
+        // Unexpected end-of-input
         Game gEx = gameWithInput("");
         Player ben = new Player("Ben", 500);
-        gEx.getTable().addToEnd(ben);
-        ben.setBet(10);
+        gEx.getTable().add(ben);
+        give(ben, "9", "7");
 
-        Exception thrown = null;
+        boolean thrown = false;
         try {
             gEx.endRound();
         }
-        catch (Exception e) {
-            thrown = e;
+        catch (IllegalStateException e) {
+            thrown = true;
         }
-        assertTrue(thrown instanceof IllegalStateException);
+
+        assertTrue(thrown);
+        assertEquals(0, ben.getHandSize());
     }
 
 

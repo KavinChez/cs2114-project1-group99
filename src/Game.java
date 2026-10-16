@@ -169,24 +169,24 @@ public class Game {
     public void endRound() {
         dealer.clearHand();
 
-        // Remove broke players or players wishing to leave
         int i = 0;
         while (i < table.size()) {
             Player p = table.get(i);
+            p.clearHand();
+
             if (p.isBroke()) {
-                System.out.println(p.getName()
-                    + " is broke and removed from the table.");
+                System.out.println(p.getName() + " is broke and leaves.");
                 table.remove(p);
             }
             else {
                 String keepPlaying = readChoice(p.getName()
                     + ", keep playing? (yes/no): ", new String[] { "yes",
                         "no" });
+
                 if (keepPlaying.equalsIgnoreCase("no")) {
                     table.remove(p);
                 }
                 else {
-                    p.clearHand();
                     i++;
                 }
             }
