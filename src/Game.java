@@ -182,8 +182,15 @@ public class Game {
 
 
     public void shuffle() {
-        // TODO: move cards one at a time from a random index
-        // into a new chain. Needs removeAt(int), or get(i) + remove(card).
+        LinkedChain<Card> shuffled = new LinkedChain<Card>();
+
+        while (!deck.isEmpty()) {
+            int index = random.nextInt(deck.size());
+            Card card = deck.removeAt(index);
+            shuffled.add(card);
+        }
+
+        deck = shuffled;
     }
 
 
