@@ -175,9 +175,23 @@ public class Game {
 
 
     public void buildDeck() {
-        // TODO: deck.clear(), then NUM_DECKS x 52 cards using
-        // Card.SPADES/HEARTS/DIAMONDS/CLUBS and ranks A, 2-10, J, Q, K.
-        // Then shuffle().
+        deck.clear();
+
+        String[] suits = { Card.SPADES, Card.HEARTS, Card.DIAMONDS,
+            Card.CLUBS };
+
+        String[] ranks = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+            "J", "Q", "K" };
+
+        for (int d = 0; d < NUM_DECKS; d++) {
+            for (String suit : suits) {
+                for (String rank : ranks) {
+                    deck.add(new Card(suit, rank));
+                }
+            }
+        }
+
+        shuffle();
     }
 
 
@@ -195,13 +209,22 @@ public class Game {
 
 
     public void checkShoe() {
-        // TODO: if deck.size() < 15, buildDeck().
+        if (deck.size() < 15) {
+            buildDeck();
+        }
     }
 
 
     public void deal(Player p) {
-        // TODO: if deck.isEmpty() throw IllegalStateException,
-        // otherwise p.addToHand(deck.remove()).
+        if (p == null) {
+            throw new IllegalArgumentException("Player cannot be null.");
+        }
+
+        if (deck.isEmpty()) {
+            throw new IllegalStateException("Cannot deal from an empty deck.");
+        }
+
+        p.addToHand(deck.removeFirst());
     }
 
     // ----- Betting and payouts -----
@@ -287,6 +310,16 @@ public class Game {
 
 
     public String readChoice(String prompt, String[] options) {
+        if (options == null || options.length == 0) {
+            throw new IllegalArgumentException("Choices cannot be empty.");
+        }
+
+        for (String option : options) {
+            if (option == null || option.trim().isEmpty()) {
+                throw new IllegalArgumentException("Invalid choice option.");
+            }
+        }
+
         while (true) {
             System.out.print(prompt);
 
@@ -294,11 +327,11 @@ public class Game {
                 throw new IllegalStateException("Input ended.");
             }
 
-            String choice = scanner.nextLine().trim();
+            String answer = scanner.nextLine().trim();
 
             for (String option : options) {
-                if (choice.equalsIgnoreCase(option)) {
-                    return option;
+                if (answer.equalsIgnoreCase(option.trim())) {
+                    return option.trim().toLowerCase(java.util.Locale.ROOT);
                 }
             }
 
