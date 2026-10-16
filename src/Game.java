@@ -59,7 +59,7 @@ public class Game {
                 System.out.println();
             }
         }
-        catch (InputEndedException e) {
+        catch (IllegalStateException e) {
             System.out.println("\nInput ended; leaving the game.");
         }
 
