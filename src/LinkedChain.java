@@ -2,19 +2,21 @@
  * A generic chain of linked nodes. Use it as the storage inside your
  * own classes, and extend or modify it as your project needs.
  *
- * This class owns storage only: nodes, the head reference, and the
- * count. It contains no application logic. A class that needs a
- * collection should hold a LinkedChain field and call its methods.
+ * This class owns storage only: nodes, the head and tail references,
+ * and the count. It contains no application logic. A class that needs
+ * a collection should hold a LinkedChain field and call its methods.
  *
- * add() places the new entry at the FRONT of the chain, so entries added
- * with add() come back from toArray() in reverse order of insertion.
- * addToEnd() preserves insertion order.
+ * add() places the new entry at the END of the chain, preserving
+ * insertion order. addToEnd() provides the same behavior.
+ * Duplicate entries are allowed, but null entries are prohibited.
  *
  * Time complexity, where n is the number of entries:
  * add O(1)
- * addToEnd O(n)
+ * addToEnd O(1)
  * remove() O(1)
+ * removeFirst() O(1)
  * remove(T) O(n)
+ * removeAt(int) O(n)
  * clear O(1)
  * get O(n)
  * contains O(n)
@@ -22,13 +24,13 @@
  * size O(1)
  * isEmpty O(1)
  * toArray O(n)
+ * toString O(n)
  *
- * /**
- * A reusable, generic singly linked list that preserves insertion order.
- * Null entries are not permitted; duplicate entries are allowed.
+ * @author CS 2114 Staff
+ * @version September 2026
  *
  * @param <T>
- *            type of element stored in the chain
+ *            the type of entries stored in the chain
  */
 public class LinkedChain<T> {
     private Node<T> head;
