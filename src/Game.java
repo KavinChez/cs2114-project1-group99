@@ -31,40 +31,125 @@ public class Game {
     // ----- Round flow -----
  
     public void play() {
-        // TODO: initialTable(), then repeat until the table is
-        // empty: checkShoe, takeBets, initialDeal, turn for each player,
-        // dealerTurn, settleBets, endRound. Catch IllegalStateException
-        // from the input methods, print final bankrolls, and return.
+        try {
+            initialTable();
+            while (!table.isEmpty()) {
+                checkShoe();
+                takeBets();
+                initialDeal();
+                
+                for (int i = 0; i < table.size(); i++) {
+                    turn(table.get(i));
+                }
+                
+                dealerTurn();
+                settleBets();
+                endRound();
+            }
+        }
+        catch (IllegalStateException e) {
+            // Print final bankrolls upon EOF / exit
+            System.out.println("\nGame over. Final bankrolls:");
+            for (int i = 0; i < table.size(); i++) {
+                Player p = table.get(i);
+                System.out.println(p.getName() + ": $" + p.getBankroll());
+            }
+        }
     }
  
     public void initialTable() {
-        // TODO: readName(), then
-        // table.addToEnd(new Player(name, STARTING_BANKROLL)).
+        while (table.size() < 5) {
+            String inputName = readName("Enter Player " + (table.size() + 1) + "'s name (or type END to finish): ");
+            if (inputName.equalsIgnoreCase("END")) {
+                break;
+            }
+            table.addToEnd(new Player(inputName, STARTING_BANKROLL));
+        }
+        if (table.isEmpty()) {
+            throw new IllegalStateException("No players entered.");
+        }
     }
  
     public void initialDeal() {
-        // TODO: two cards to each player and the dealer.
-        // Show the dealer's first card only, e.g. "Dealer: 9? ??".
+        for (int i = 0; i < 2; i++) {
+            for (int p = 0; p < table.size(); p++) {
+                deal(table.get(p));
+            }
+            deal(dealer);
+        }
     }
  
     public void turn(Player p) {
-        // TODO: hit / stand / double until stand, bust, or 21.
-        // Skip the turn if p.isBlackjack().
+        if (p.isBlackjack()) {
+            return;
+        }
+        
+        boolean active = true;
+        while (active && !p.isBust() && p.getHandValue() < 21) {
+            System.out.println(p);
+            String[] options;
+            if (p.canDoubleDown()) {
+                options = new String[] { "hit", "stand", "double" };
+            } else {
+                options = new String[] { "hit", "stand" };
+            }
+            
+            String choice = readChoice("Action for " + p.getName() + " (hit/stand" + (p.canDoubleDown() ? "/double" : "") + "): ", options);
+            
+            if (choice.equalsIgnoreCase("hit")) {
+                deal(p);
+            } else if (choice.equalsIgnoreCase("stand")) {
+                active = false;
+            } else if (choice.equalsIgnoreCase("double")) {
+                p.doubleBet();
+                deal(p);
+                active = false;
+            }
+        }
+        System.out.println(p);
     }
  
     public void dealerTurn() {
-        // TODO: skip if every player busted, otherwise
-        // while (dealer.getHandValue() < 17) deal(dealer);
+        boolean allBust = true;
+        for (int i = 0; i < table.size(); i++) {
+            if (!table.get(i).isBust()) {
+                allBust = false;
+                break;
+            }
+        }
+        
+        if (!allBust) {
+            while (dealer.getHandValue() < 17) {
+                deal(dealer);
+            }
+        }
+        System.out.println(dealer);
     }
- 
+
     public void endRound() {
-        // TODO: clear hands, remove broke players, ask the rest
-        // whether to keep playing.
+        dealer.clearHand();
+        
+        // Remove broke players or players wishing to leave
+        int i = 0;
+        while (i < table.size()) {
+            Player p = table.get(i);
+            if (p.isBroke()) {
+                System.out.println(p.getName() + " is broke and removed from the table.");
+                table.remove(p);
+            } else {
+                String keepPlaying = readChoice(p.getName() + ", keep playing? (yes/no): ", new String[] { "yes", "no" });
+                if (keepPlaying.equalsIgnoreCase("no")) {
+                    table.remove(p);
+                } else {
+                    p.clearHand();
+                    i++;
+                }
+            }
+        }
     }
- 
+
     public boolean removePlayer(Player p) {
-        // TODO
-        return false;
+        return table.remove(p);
     }
  
     // ----- Deck -----

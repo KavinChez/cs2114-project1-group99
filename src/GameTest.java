@@ -49,6 +49,156 @@ public class GameTest extends student.TestCase {
         }
         assertTrue(thrown instanceof IllegalArgumentException);
     }
+    
+    public void testPlay() {
+        // Normal test case
+        Game g = gameWithInput("END\n");
+        g.play();
+        assertTrue(g.getTable().isEmpty());
+
+        // Exception handling with empty input stream
+        Game gEx = gameWithInput("");
+        Exception thrown = null;
+        try {
+            gEx.play();
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(gEx.getTable().isEmpty());
+    }
+    
+    public void testInitialTable() {
+        // Normal test case
+        Game g = gameWithInput("Alice\nEND\n");
+        g.initialTable();
+        assertEquals(1, g.getTable().size());
+        Player p = g.getTable().get(0);
+        assertEquals("Alice", p.getName());
+        assertEquals(500, p.getBankroll());
+
+        // Exception testing for unexpected end-of-input
+        Game gEx = gameWithInput("");
+        Exception thrown = null;
+        try {
+            gEx.initialTable();
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+    }
+    
+    public void testInitialDeal() {
+        // Normal test case
+        ana.setBet(10);
+        game.initialDeal();
+        assertEquals(2, ana.getHandSize());
+        assertEquals(2, dealer.getHandSize());
+
+        // Exception testing for empty deck
+        while (!game.getDeck().isEmpty()) {
+            game.getDeck().remove();
+        }
+        Exception thrown = null;
+        try {
+            game.deal(ana);
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+    }
+    
+    public void testTurn() {
+        // Normal test case (Blackjack skip and stand choice)
+        give(ana, "A", "K");
+        assertTrue(ana.isBlackjack());
+        game.turn(ana);
+        assertEquals(2, ana.getHandSize());
+
+        // Exception testing for input termination
+        Game gEx = gameWithInput("");
+        Player ben = new Player("Ben", 500);
+        gEx.getTable().addToEnd(ben);
+        ben.setBet(10);
+        give(ben, "10", "7");
+        
+        Exception thrown = null;
+        try {
+            gEx.turn(ben);
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+    }
+    
+    public void testDealerTurn() {
+        // Normal test case
+        give(dealer, "5", "6");
+        assertEquals(11, dealer.getHandValue());
+        game.dealerTurn();
+        assertTrue(dealer.getHandValue() >= 17);
+
+        // Exception testing for empty deck during dealer hit sequence
+        while (!game.getDeck().isEmpty()) {
+            game.getDeck().remove();
+        }
+        give(dealer, "5", "6");
+        
+        Exception thrown = null;
+        try {
+            game.dealerTurn();
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+    }
+    
+    public void testEndRound() {
+        // Normal test case (broke player removal)
+        Player brokePlayer = new Player("BrokeUser", 0);
+        game.getTable().addToEnd(brokePlayer);
+        assertTrue(brokePlayer.isBroke());
+        if (brokePlayer.isBroke()) {
+            game.removePlayer(brokePlayer);
+        }
+        assertFalse(game.getTable().contains(brokePlayer));
+
+        // Exception testing for input termination
+        Game gEx = gameWithInput("");
+        Player ben = new Player("Ben", 500);
+        gEx.getTable().addToEnd(ben);
+        ben.setBet(10);
+        
+        Exception thrown = null;
+        try {
+            gEx.endRound();
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+    }
+    
+    public void testRemovePlayer() {
+        // Normal test case
+        Player ben = new Player("Ben", 500);
+        game.getTable().addToEnd(ben);
+        assertEquals(2, game.getTable().size());
+        
+        boolean removed = game.removePlayer(ben);
+        assertTrue(removed);
+        assertEquals(1, game.getTable().size());
+        assertFalse(game.getTable().contains(ben));
+
+        // Edge case / exception-safe check for non-existent player
+        Player stranger = new Player("Stranger", 500);
+        boolean notRemoved = game.removePlayer(stranger);
+        assertFalse(notRemoved);
+    }
  
     public void testTakeBets() {
         Game g = gameWithInput("25\n");
