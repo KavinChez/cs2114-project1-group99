@@ -35,7 +35,6 @@ In Eclipse, open each test class and select **Run As → JUnit Test**.
 - `PlayerTest.java`
 - `LinkedChainTest.java`
 - `GameTest.java`
-- `GameMethodsTest.java`
 
 The tests cover card properties and equality, player bankroll and hand behavior, linked-list operations, blackjack rules, deck construction and shuffling, input validation, and game integration.
 
