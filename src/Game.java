@@ -120,17 +120,10 @@ public class Game {
         boolean active = true;
         while (active && !p.isBust() && p.getHandValue() < 21) {
             System.out.println(p);
-            String[] options;
-            if (p.canDoubleDown()) {
-                options = new String[] { "hit", "stand", "double" };
-            }
-            else {
-                options = new String[] { "hit", "stand" };
-            }
+            String[] options = actionsFor(p);
 
-            String choice = readChoice("Action for " + p.getName()
-                + " (hit/stand" + (p.canDoubleDown() ? "/double" : "") + "): ",
-                options);
+            String choice = readChoice("Action for " + p.getName() + " ("
+                + String.join("/", options) + "): ", options);
 
             if (choice.equalsIgnoreCase("hit")) {
                 deal(p);
@@ -143,15 +136,41 @@ public class Game {
                 deal(p);
                 active = false;
             }
+            else if (choice.equalsIgnoreCase("split")) {
+                p.split();
+                deal(p);
+                deal(p.getSplitHand());
+                System.out.println(p.getName() + " splits into two hands.");
+            }
         }
         System.out.println(p);
+
+        // After the first hand is done, play the second hand the same way.
+        if (p.getSplitHand() != null) {
+            turn(p.getSplitHand());
+        }
+    }
+
+    private String[] actionsFor(Player p) {
+        LinkedChain<String> actions = new LinkedChain<String>();
+        actions.add("hit");
+        actions.add("stand");
+        if (p.canDoubleDown()) {
+            actions.add("double");
+        }
+        if (p.canSplit()) {
+            actions.add("split");
+        }
+        return actions.toArray(new String[actions.size()]);
     }
 
 
     public void dealerTurn() {
         boolean allBust = true;
         for (int i = 0; i < table.size(); i++) {
-            if (!table.get(i).isBust()) {
+            Player p = table.get(i);
+            Player second = p.getSplitHand();
+            if (!p.isBust() || (second != null && !second.isBust())) {
                 allBust = false;
                 break;
             }
@@ -309,18 +328,30 @@ public class Game {
 
             p.settle(amount);
 
-            if (profit > 0) {
-                System.out.println(p.getName() + " wins $" + profit
-                    + ". Bankroll: $" + p.getBankroll());
+            printResult(p.getName(), profit, p.getBankroll());
+
+            Player second = p.getSplitHand();
+            if (second != null) {
+                int secondBet = second.getBet();
+                int secondAmount = payout(second);
+                p.settleSplit(secondAmount);
+                printResult(second.getName(), secondAmount - secondBet,
+                    p.getBankroll());
             }
-            else if (profit < 0) {
-                System.out.println(p.getName() + " loses $" + (-profit)
-                    + ". Bankroll: $" + p.getBankroll());
-            }
-            else {
-                System.out.println(p.getName() + " pushes. Bankroll: $" + p
-                    .getBankroll());
-            }
+        }
+    }
+
+    private void printResult(String name, int profit, int bankroll) {
+        if (profit > 0) {
+            System.out.println(name + " wins $" + profit + ". Bankroll: $"
+                + bankroll);
+        }
+        else if (profit < 0) {
+            System.out.println(name + " loses $" + (-profit)
+                + ". Bankroll: $" + bankroll);
+        }
+        else {
+            System.out.println(name + " pushes. Bankroll: $" + bankroll);
         }
     }
 
@@ -418,3 +449,4 @@ public class Game {
         return dealer;
     }
 }
+ 

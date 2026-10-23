@@ -348,5 +348,136 @@ public class PlayerTest extends student.TestCase {
     public void testToStringEmptyHand() {
         assertEquals("Ana: (0)", ana.toString());
     }
+
+    public void testCanSplit() {
+        ana.setBet(50);
+        ana.addToHand(new Card(Card.HEARTS, "8"));
+        ana.addToHand(new Card(Card.DIAMONDS, "8"));
+        assertTrue(ana.canSplit());
+    }
+
+    public void testCanSplitFalse() {
+        ana.setBet(50);
+        ana.addToHand(tenSpades);
+        ana.addToHand(kingHearts);
+        assertFalse(ana.canSplit());
+
+        Player ben = new Player("Ben", 100);
+        ben.setBet(60);
+        ben.addToHand(fiveHearts);
+        ben.addToHand(fiveDiamonds);
+        assertFalse(ben.canSplit());
+    }
+
+    public void testSplit() {
+        ana.setBet(50);
+        ana.addToHand(fiveHearts);
+        ana.addToHand(fiveDiamonds);
+        ana.split();
+        assertEquals(400, ana.getBankroll());
+        assertEquals(50, ana.getBet());
+        assertEquals(1, ana.getHandSize());
+        assertEquals(fiveHearts, ana.getHand()[0]);
+
+        Player second = ana.getSplitHand();
+        assertEquals("Ana (hand 2)", second.getName());
+        assertEquals(50, second.getBet());
+        assertEquals(1, second.getHandSize());
+        assertEquals(fiveDiamonds, second.getHand()[0]);
+
+        ana.addToHand(new Card(Card.CLUBS, "5"));
+        assertFalse(ana.canSplit());
+        assertFalse(ana.canDoubleDown());
+    }
+
+    public void testSplitIneligible() {
+        ana.setBet(50);
+        ana.addToHand(fiveHearts);
+        ana.addToHand(sixClubs);
+        Exception thrown = null;
+        try {
+            ana.split();
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+        assertEquals(450, ana.getBankroll());
+        assertEquals(2, ana.getHandSize());
+        assertNull(ana.getSplitHand());
+    }
+
+    public void testGetSplitHand() {
+        assertNull(ana.getSplitHand());
+        ana.setBet(50);
+        ana.addToHand(fiveHearts);
+        ana.addToHand(fiveDiamonds);
+        ana.split();
+        assertNotNull(ana.getSplitHand());
+    }
+
+    public void testSettleSplit() {
+        ana.setBet(50);
+        ana.addToHand(fiveHearts);
+        ana.addToHand(fiveDiamonds);
+        ana.split();
+        ana.settleSplit(100);
+        assertEquals(500, ana.getBankroll());
+        assertNull(ana.getSplitHand());
+    }
+
+    public void testSettleSplitInvalid() {
+        Exception thrown = null;
+        try {
+            ana.settleSplit(10);
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+
+        ana.setBet(50);
+        ana.addToHand(fiveHearts);
+        ana.addToHand(fiveDiamonds);
+        ana.split();
+        thrown = null;
+        try {
+            ana.settleSplit(-5);
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalArgumentException);
+        assertEquals(400, ana.getBankroll());
+        assertNotNull(ana.getSplitHand());
+    }
+
+    public void testIsBlackjackAfterSplit() {
+        ana.setBet(50);
+        ana.addToHand(aceSpades);
+        ana.addToHand(aceHearts);
+        ana.split();
+        ana.addToHand(kingHearts);
+        ana.getSplitHand().addToHand(tenSpades);
+        assertEquals(21, ana.getHandValue());
+        assertFalse(ana.isBlackjack());
+        assertFalse(ana.getSplitHand().isBlackjack());
+    }
+
+    public void testClearHandResetsSplit() {
+        ana.setBet(50);
+        ana.addToHand(fiveHearts);
+        ana.addToHand(fiveDiamonds);
+        ana.split();
+        ana.settleSplit(0);
+        ana.settle(0);
+        ana.clearHand();
+        assertNull(ana.getSplitHand());
+
+        ana.setBet(50);
+        ana.addToHand(fiveHearts);
+        ana.addToHand(fiveDiamonds);
+        assertTrue(ana.canSplit());
+    }
 }
  

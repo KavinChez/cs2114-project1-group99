@@ -358,4 +358,72 @@ public class GameTest extends student.TestCase {
         }
         assertTrue(thrown instanceof IllegalStateException);
     }
+
+
+    public void testTurnSplit() {
+        // Stand on hand 1, then hit once on hand 2 to prove it gets a turn.
+        Game g = gameWithInput("split\nstand\nhit\nstand\n");
+        Player ben = new Player("Ben", 500);
+        g.getTable().add(ben);
+        ben.setBet(50);
+        give(ben, "8", "8");
+        g.turn(ben);
+        assertEquals(400, ben.getBankroll());
+        assertEquals(2, ben.getHandSize());
+        assertNotNull(ben.getSplitHand());
+        assertEquals(3, ben.getSplitHand().getHandSize());
+        assertEquals(50, ben.getSplitHand().getBet());
+    }
+
+
+    public void testTurnSplitNotAllowed() {
+        Game g = gameWithInput("split\nstand\n");
+        Player ben = new Player("Ben", 500);
+        g.getTable().add(ben);
+        ben.setBet(50);
+        give(ben, "10", "7");
+        g.turn(ben);
+        assertNull(ben.getSplitHand());
+        assertEquals(2, ben.getHandSize());
+        assertEquals(450, ben.getBankroll());
+    }
+
+
+    public void testDealerTurnPlaysForSplitHand() {
+        ana.setBet(10);
+        give(ana, "8", "8");
+        ana.split();
+        give(ana, "10", "10");
+        give(ana.getSplitHand(), "9");
+        give(dealer, "5", "6");
+        game.dealerTurn();
+        assertTrue(dealer.getHandValue() >= 17);
+    }
+
+
+    public void testSettleBetsSplit() {
+        ana.setBet(10);
+        give(ana, "8", "8");
+        ana.split();
+        give(ana, "10");
+        give(ana.getSplitHand(), "9");
+        give(dealer, "10", "7");
+        game.settleBets();
+        // Hand 1 (18) beats 17 and gets $20 back. Hand 2 (17) pushes: $10.
+        assertEquals(510, ana.getBankroll());
+        assertEquals(0, ana.getBet());
+        assertNull(ana.getSplitHand());
+    }
+
+
+    public void testPayoutSplitTwentyOne() {
+        ana.setBet(10);
+        give(ana, "A", "A");
+        ana.split();
+        give(ana, "K");
+        give(dealer, "10", "8");
+        // 21 after a split pays 2x, not the 3:2 blackjack payout.
+        assertEquals(20, game.payout(ana));
+    }
 }
+ 

@@ -10,6 +10,8 @@ public class Player {
     private Card[] hand;
     private int handSize;
     private boolean doubledDown;
+    private Player splitHand;
+    private boolean hasSplit;
  
     public Player(String name, int bankroll) {
         if (isBlank(name)) {
@@ -25,6 +27,8 @@ public class Player {
         this.hand = new Card[MAX_HAND_SIZE];
         this.handSize = 0;
         this.doubledDown = false;
+        this.splitHand = null;
+        this.hasSplit = false;
     }
  
     public String getName() {
@@ -60,8 +64,9 @@ public class Player {
  
     public boolean canDoubleDown() {
         // Needs exactly two cards, an active bet, enough money to match it,
-        // and no earlier double down this round.
-        return handSize == 2 && bet > 0 && bankroll >= bet && !doubledDown;
+        // no earlier double down this round, and no split this round.
+        return handSize == 2 && bet > 0 && bankroll >= bet && !doubledDown
+            && !hasSplit;
     }
  
     public void doubleBet() {
@@ -71,6 +76,45 @@ public class Player {
         bankroll -= bet;
         bet *= 2;
         doubledDown = true;
+    }
+
+    public boolean canSplit() {
+        // Needs a pair (two cards of the same rank), an active bet, enough
+        // money to match it, and no earlier split or double down this round.
+        return handSize == 2 && hand[0].getRank().equals(hand[1].getRank())
+            && bet > 0 && bankroll >= bet && !hasSplit && !doubledDown;
+    }
+
+    public void split() {
+        if (!canSplit()) {
+            throw new IllegalStateException("Cannot split now.");
+        }
+        // The second hand is its own Player, so it reuses all the hand
+        // logic. Its bet comes out of this player's bankroll.
+        bankroll -= bet;
+        splitHand = new Player(name + " (hand 2)", bet);
+        splitHand.setBet(bet);
+        splitHand.addToHand(hand[1]);
+        splitHand.hasSplit = true;
+        hand[1] = null;
+        handSize = 1;
+        hasSplit = true;
+    }
+
+    public Player getSplitHand() {
+        return splitHand;
+    }
+
+    public void settleSplit(int payout) {
+        if (splitHand == null) {
+            throw new IllegalStateException("There is no split hand.");
+        }
+        if (payout < 0) {
+            throw new IllegalArgumentException(
+                "Payout cannot be negative.");
+        }
+        bankroll += payout;
+        splitHand = null;
     }
  
     public void settle(int payout) {
@@ -124,7 +168,8 @@ public class Player {
     }
  
     public boolean isBlackjack() {
-        return handSize == 2 && getHandValue() == BLACKJACK;
+        // 21 on a split hand is a normal 21, not a natural blackjack.
+        return !hasSplit && handSize == 2 && getHandValue() == BLACKJACK;
     }
  
     public void clearHand() {
@@ -133,6 +178,8 @@ public class Player {
         }
         handSize = 0;
         doubledDown = false;
+        splitHand = null;
+        hasSplit = false;
     }
  
     public boolean isBroke() {
