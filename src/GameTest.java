@@ -1,7 +1,16 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Random;
 import java.util.Scanner;
 
 public class GameTest extends student.TestCase {
+    private static final String[] SUITS = { Card.SPADES, Card.HEARTS,
+        Card.DIAMONDS, Card.CLUBS };
+    private static final String[] RANKS = { "A", "2", "3", "4", "5", "6",
+        "7", "8", "9", "10", "J", "Q", "K" };
+
     private Game game;
     private Player ana;
     private Player dealer;
@@ -424,6 +433,166 @@ public class GameTest extends student.TestCase {
         give(dealer, "10", "8");
         // 21 after a split pays 2x, not the 3:2 blackjack payout.
         assertEquals(20, game.payout(ana));
+    }
+
+
+    private void assertFullShoe(LinkedChain<Card> deck) {
+        assertEquals(104, deck.size());
+        for (String suit : SUITS) {
+            for (String rank : RANKS) {
+                assertEquals(rank + suit, 2, deck.count(new Card(suit, rank)));
+            }
+        }
+    }
+
+
+    private void dealDownTo(int cardsLeft) {
+        while (game.getDeck().size() > cardsLeft) {
+            game.getDeck().removeFirst();
+        }
+    }
+
+
+    private String runMain(String input) {
+        InputStream originalIn = System.in;
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try {
+            System.setIn(new ByteArrayInputStream(input.getBytes()));
+            System.setOut(new PrintStream(output));
+            Game.main(new String[0]);
+        }
+        finally {
+            System.setIn(originalIn);
+            System.setOut(originalOut);
+        }
+        return output.toString();
+    }
+
+
+    public void testBuildDeck() {
+        game.buildDeck();
+        assertFullShoe(game.getDeck());
+    }
+
+
+    public void testBuildDeckRebuildsUsedDeck() {
+        dealDownTo(40);
+        game.buildDeck();
+        assertFullShoe(game.getDeck());
+
+        game.buildDeck();
+        assertFullShoe(game.getDeck());
+    }
+
+
+    public void testShuffle() {
+        String before = game.getDeck().toString();
+        game.shuffle();
+        assertFullShoe(game.getDeck());
+        assertFalse(before.equals(game.getDeck().toString()));
+    }
+
+
+    public void testShuffleEmptyDeck() {
+        game.getDeck().clear();
+        game.shuffle();
+        assertTrue(game.getDeck().isEmpty());
+    }
+
+
+    public void testCheckShoeRebuildsLowDeck() {
+        dealDownTo(14);
+        game.checkShoe();
+        assertFullShoe(game.getDeck());
+    }
+
+
+    public void testCheckShoeLeavesDeckWithFifteen() {
+        dealDownTo(15);
+        String before = game.getDeck().toString();
+        game.checkShoe();
+        assertEquals(15, game.getDeck().size());
+        assertEquals(before, game.getDeck().toString());
+    }
+
+
+    public void testReadChoice() {
+        Game g = gameWithInput(" HIT \n");
+        String[] options = { "hit", "stand" };
+        assertEquals("hit", g.readChoice("Action: ", options));
+    }
+
+
+    public void testReadChoiceRePrompts() {
+        Game g = gameWithInput("fly\n\nstand\n");
+        String[] options = { "hit", "stand" };
+        assertEquals("stand", g.readChoice("Action: ", options));
+    }
+
+
+    public void testReadChoiceInputEnds() {
+        Game g = gameWithInput("fly\n");
+        String[] options = { "hit", "stand" };
+        Exception thrown = null;
+        try {
+            g.readChoice("Action: ", options);
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+    }
+
+
+    public void testReadChoiceNoOptions() {
+        Game g = gameWithInput("hit\n");
+        Exception thrown = null;
+        try {
+            g.readChoice("Action: ", new String[0]);
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalArgumentException);
+    }
+
+
+    public void testReadName() {
+        Game g = gameWithInput(" Ana \n");
+        assertEquals("Ana", g.readName("Name: "));
+    }
+
+
+    public void testReadNameRePrompts() {
+        Game g = gameWithInput("\n   \nBen\n");
+        assertEquals("Ben", g.readName("Name: "));
+    }
+
+
+    public void testReadNameInputEnds() {
+        Game g = gameWithInput("   \n");
+        Exception thrown = null;
+        try {
+            g.readName("Name: ");
+        }
+        catch (Exception e) {
+            thrown = e;
+        }
+        assertTrue(thrown instanceof IllegalStateException);
+    }
+
+
+    public void testMain() {
+        String output = runMain("Ana\nEND\n25\nstand\nno\n");
+        assertTrue(output.contains("Ana, place your bet"));
+        assertTrue(output.contains("Game over."));
+    }
+
+
+    public void testMainInputEnds() {
+        String output = runMain("");
+        assertTrue(output.contains("Game over."));
     }
 }
  
